@@ -1,0 +1,369 @@
+package bank;
+import java.util.ArrayList;
+import java.util.Scanner;
+import java.util.Random;
+public class ATM {
+    private ArrayList<account> accounts = new ArrayList<>();//开户的时候加帐户
+    Scanner sc = new Scanner(System.in);
+private account loginacc;//记住登陆后用户
+    //启动界面
+    public void start() {
+        while (true) {
+            System.out.println("欢迎");
+            System.out.println("1.登录");
+            System.out.println("2.开户");
+            System.out.println("亲选择");
+            int command = sc.nextInt();
+            switch (command) {
+                case 1:
+                    //登录
+                    login();
+                    break;
+                case 2:
+                    //开户
+                    creat();
+                    break;
+                default:
+                    System.out.println("输入错误");
+            }
+        }
+    }
+    private void login(){
+        while(true){
+            System.out.println("***登录***");
+            //1.存在账号才登录
+            if(accounts.size()==0){
+                System.out.println("请先开户");
+            return;
+             }
+            //进行登录
+            System.out.println("输入卡号");
+            String cardId=sc.next();
+            //判断卡号是否存在
+            account acc=GetCard(cardId);
+            if(acc==null){
+            System.out.println("不存在");
+            }else{
+                System.out.println("输入密码");
+                String passWord=sc.next();
+                if(acc.getPassword().equals(passWord)){
+                    loginacc=acc;
+                    System.out.println("登陆成功"+acc.getName()+"您的卡号是"+acc.getCard());
+                    //展示登陆后节面
+                    show();
+                    return;
+                }else{
+                    System.out.println("密码不对");
+                }
+            }
+        }
+    }
+    private void show() {
+        while(true){
+        System.out.println(loginacc.getName() + "选择");
+        System.out.println("1.查询账户");
+        System.out.println("2.存款");
+        System.out.println("3.取款");
+        System.out.println("4.转账");
+        System.out.println("5.修改密码");
+        System.out.println("6.退出");
+        System.out.println("7.注销当前账户");
+        int commamd = sc.nextInt();
+        switch (commamd) {
+            case 1://查询账户
+                showlogin();
+                break;
+            case 2://存款
+                deposit();
+                break;
+            case 3://取款
+                drop();
+                break;
+            case 4://转账
+                transform();
+                break;
+            case 5://修改密码
+                update();
+                return;
+            case 6://退出
+                System.out.println(loginacc.getName()+"退出成功");
+                return;//推出当前方法
+            case 7://销户
+                if(delete()) {
+                   return; //销户成功;
+                }
+                break;
+            default:
+                System.out.println("输入错误");
+        }
+    }
+    }
+    //修改密码
+    private void update(){
+        while(true){
+        System.out.println("开始修改密码");
+        System.out.println("输入当前账号密码");
+        String password=sc.next();
+        if(password.equals( loginacc.getPassword())){
+            while(true){
+            System.out.println("输入新密码");
+            String newpassword=sc.next();
+            System.out.println("再次输入新密码");
+            String okpassword= sc.next();;
+            if(okpassword.equals(newpassword)){
+                loginacc.setPassword(okpassword);
+                System.out.println("修改密码成功");
+                return;
+            }else{
+                System.out.println("两次输入密码不一样");
+            }
+            }
+            //
+        }else{
+            System.out.println("密码不正确");
+            }
+        }
+    }
+    //销户
+    private boolean delete(){
+        System.out.println("开始销户");
+        System.out.println("确认销户吗");
+        String command=sc.next();
+        switch(command){
+            case"y":
+                //判断账户中是否还有钱
+                if(loginacc.getMoney()==0){
+                    accounts.remove(loginacc);
+                    System.out.println("已销户");
+                    return true;
+                }else{
+                    System.out.println("还有钱，别销户");
+                    return false;
+                }
+            default:
+                System.out.println("账户保留");
+                return false;
+        }
+    }
+    //转账
+    private void transform(){
+        System.out.println();
+        if(accounts.size()<2){
+            System.out.println("无法转账");
+            return;
+        }
+        //2判断自己账户是否有钱
+        if(loginacc.getMoney()==0){
+            System.out.println("没钱，不能转");
+            return;
+        }
+        //3.开始转账
+        while(true) {
+            System.out.println("输入对方卡号");
+            String cardid = sc.next();
+            account acc = GetCard(cardid);
+            if (acc == null) {
+                System.out.println("您输入的卡号不正确");
+
+            }else{
+                String name="*"+acc.getName().substring(1);
+                System.out.println("输入对方户主的姓");
+                String name1=sc.next();
+                if(acc.getName().startsWith(name1)) {
+                    while (true) {
+                        System.out.println("认证通过");
+                        System.out.println("输入转账金额");
+                        double money = sc.nextDouble();
+                        //判断金额是否超过自己的余额
+                        if (money <= loginacc.getMoney()) {
+                            acc.setMoney(acc.getMoney() + money);
+                            loginacc.setMoney(loginacc.getMoney()-money);
+                            System.out.println("转账成功");
+                            return;
+                        }else{
+                            System.out.println("余额不足");
+                        }
+                    }
+                }
+                    else{
+                        System.out.println("输入错误");
+
+                    }
+            }
+        }
+    }
+    //取款
+    private void drop(){
+        System.out.println("开始取钱");
+        //判断是否有钱，最低一百
+        if(loginacc.getMoney()<100){
+            System.out.println("余额不足100");
+            return;
+        }
+        while (true){
+        System.out.println("");
+        double money=sc.nextDouble();
+        //判断余额是否足够
+        if(loginacc.getMoney()>=money){
+            //取钱
+            //不能超过限额
+            if(money> loginacc.getLimit()){
+                System.out.println("大于限额，不能取");
+                System.out.println("最多可取"+loginacc.getLimit());
+            }
+            loginacc.setMoney(loginacc.getMoney()-money);
+            System.out.println("取钱成功，余额为"+loginacc.getMoney());
+            break;
+        }else{
+            System.out.println("余额不足");
+        }
+    }
+    }
+    //存款
+    private void deposit(){
+        System.out.println("开始存款");
+        System.out.println("输入存款金额");
+        double money=sc.nextDouble();
+        //更新当前账户余额
+        loginacc.setMoney(loginacc.getMoney()+money);
+        System.out.println("存款成功");
+        System.out.println("余额为");
+        System.out.println(loginacc.getMoney());
+    }
+    private void showlogin(){
+        System.out.println("户主卡号："+loginacc.getCard());
+        System.out.println("户主性别："+loginacc.getSex());
+        System.out.println("户主姓名："+loginacc.getName());
+        System.out.println("余额："+loginacc.getMoney());
+        System.out.println("限额："+loginacc.getLimit());
+    }
+    //完成开户操作
+    private void creat(){
+        //1.增加账户对象，封装开户信息
+        account acc=new account();
+        //2.输入开户信息
+        System.out.println("输入账户名称");
+        String name=sc.next();
+        acc.setName(name);
+       while(true){
+           System.out.println("性别");
+           char sex=sc.next().charAt(0);//男
+           if(sex=='男'||sex=='女'){
+               acc.setSex(sex);
+           break;
+           }else{
+               System.out.println("输入错误");
+           }
+       }
+       while(true){
+        System.out.println("密码");
+       String passWard=sc.next();
+        System.out.println("亲再次输入");
+        String okpassWord= sc.next();
+       //判断
+        if(okpassWord.equals(passWard)){
+            acc.setPassword(okpassWord);break;
+        }else{
+            System.out.println("输入错误");
+        }
+       }
+        System.out.println("额度");
+       double limit=sc.nextDouble();
+       acc.setLimit(limit);
+       //生成卡号
+        String newCardId=createCard();
+        acc.setCard(newCardId);
+        //3.对象存入
+        accounts.add(acc);
+        System.out.println(acc.getName()+"先生开户成功，卡号是"+acc.getCard());
+    }
+    /*返回卡号*/
+    private String createCard(){
+        while(true){
+            String cardId="";
+        Random r=new Random();
+        for (int i = 0; i < 8; i++) {
+            int data=r.nextInt(10);
+            cardId+=data;
+        }/*判断记住的卡号是否重复*/
+        account acc=GetCard(cardId);
+        if(acc==null){
+            //返回
+            return cardId;
+        }}
+    }
+    private account GetCard(String cardId){
+        for (int i = 0; i < accounts.size(); i++) {
+            account acc=accounts.get(i);
+            if (acc.getCard().equals(cardId)) {
+                return acc;
+            }
+        }
+        return null;
+    }
+}
+class text {
+    public static void main(String[] args){
+        //新建对象
+        ATM atm=new ATM();
+        //开户
+        atm.start();
+    }
+}
+class account {
+    private String name;//名字
+    private String card;//卡号
+    private char sex;//性别
+    private String password;//密码
+    private double money;//余额
+    private double limit;//限额
+
+    public double getMoney() {
+        return money;
+    }
+
+    public String getCard() {
+        return card;
+    }
+
+    public void setCard(String card) {
+        this.card = card;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public double getLimit() {
+        return limit;
+    }
+
+    public void setLimit(double limit) {
+        this.limit = limit;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public char getSex() {
+        return sex;
+    }
+
+    public void setSex(char sex) {
+        this.sex = sex;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void setMoney(double money) {
+        this.money = money;
+    }
+}
+
